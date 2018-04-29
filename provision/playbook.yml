@@ -20,3 +20,23 @@
         update_cache: yes
         cache_valid_time: 86400
         upgrade: dist
+    - name: distribution-supplied tools are installed
+      apt:
+        name:
+          - autoconf
+          - make
+          - gcc
+          - tar
+          - unzip
+          - patch
+          - texlive
+          - netpbm
+          - doxygen
+          - texinfo
+          - g++
+          - flex
+          - transfig
+          - texlive-latex-extra
+          - bison
+          - libpython2.7-dev
+          - xz-utils

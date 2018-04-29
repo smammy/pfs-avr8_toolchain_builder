@@ -1,10 +1,19 @@
 #!/bin/bash
 
-basedir="~/avr8-gnu-toolchain-linux_x86_64"
-pkgdir="/vagrant"
-atversion="3.6.1"
-atbuildnr="$(date --utc +%Y%m%d%H%M%S)-pfs"
-aturl="https://office.innovative-electronics.com/third-party/atmel/distribute.atmel.no/tools/opensource/Atmel-AVR-GNU-Toolchain/$atversion"
+# Only set variable if it's not already set.
+# This allows the caller to easily override these values using env vars.
+maybe_set () { eval "[ -z \${$1+set} ] && $1=$2"; }
+
+maybe_set basedir "/home/vagrant/avr8-toolchain-build"
+maybe_set destdir "/vagrant/releases"
+maybe_set platform x86_64-linux-gnu
+maybe_set archname x86_64
+maybe_set atversion "3.6.1"
+maybe_set atbuildnr "$(date --utc +%Y%m%d%H%M%S)-pfs"
+maybe_set installbase "avr8-gnu-toolchain-linux"
+maybe_set tarbase "avr8-gnu-toolchain-$atversion.$atbuildnr.linux.any"
+maybe_set aturl "https://office.innovative-electronics.com/third-party/atmel/distribute.atmel.no/tools/opensource/Atmel-AVR-GNU-Toolchain/$atversion"
+maybe_set dlcache "/var/cache/wget"
 
 ################################################################################
 # 
@@ -29,79 +38,54 @@ aturl="https://office.innovative-electronics.com/third-party/atmel/distribute.at
 # 
 ################################################################################
 
-mkdir -p "$basedir"
-cd "$basedir"
-
-hostarch=$(gcc -dumpmachine | awk -F- '{print$1}')
-installdir="avr8-gnu-toolchain-linux_$hostarch"
-
-wget_with_cache_dir="/var/cache/wget"
 wget_with_cache ()
 {
     for url in "$@"; do
-        filename=$(basename "$url")
+        local filename=$(basename "$url")
         echo "fetching $filename"
-        mkdir -p "$wget_with_cache_dir"
-        if [ ! -e "$wget_with_cache_dir/$filename" ]; then
-            wget -O "$wget_with_cache_dir/$filename" "$url"
+        mkdir -p "$dlcache"
+        if [ ! -e "$dlcache/$filename" ]; then
+            wget -O "$dlcache/$filename" "$url"
         fi
-        cp "$wget_with_cache_dir/$filename" "$PWD"
+        cp "$dlcache/$filename" "$PWD"
     done
 }
 
 untar ()
 {
-    tarfile="$1"
+    local tarfile="$1"
     echo "expanding $tarfile"
     tar -xf "$tarfile"
 }
 
-################################################################################
-if [ -z "$skip_prep" ]; then
+do_prepare ()
+{
+    [ -n "$skip_prepare" ] && return
+    
+    mkdir -p src
+    ( cd src && wget_with_cache "$aturl"/avr-binutils.tar.bz2 \
+                                "$aturl"/avr-gcc.tar.bz2 \
+                                "$aturl"/avr-gdb.tar.bz2 \
+                                "$aturl"/avr-libc.tar.bz2 \
+      && for x in *.tar.*; do untar "$x"; done )
 
-sudo apt install -y \
-    autoconf \
-    make \
-    gcc \
-    tar \
-    unzip \
-    patch \
-    texlive \
-    netpbm \
-    doxygen \
-    texinfo \
-    g++ \
-    flex \
-    transfig \
-    texlive-latex-extra \
-    bison \
-    libpython2.7-dev \
-    xz-utils
+    mkdir -p src/headers
+    ( cd src/headers && wget_with_cache "$aturl"/avr8-headers.zip )
 
-mkdir -p src
-( cd src && wget_with_cache "$aturl"/avr-binutils.tar.bz2 \
-                            "$aturl"/avr-gcc.tar.bz2 \
-                            "$aturl"/avr-gdb.tar.bz2 \
-                            "$aturl"/avr-libc.tar.bz2 \
-  && for x in *.tar.*; do untar "$x"; done )
+    mkdir -p src/gmp
+    ( cd src/gmp && wget_with_cache https://gmplib.org/download/gmp/gmp-5.0.2.tar.bz2 )
 
-mkdir -p src/headers
-( cd src/headers && wget_with_cache "$aturl"/avr8-headers.zip )
+    mkdir -p src/mpfr
+    ( cd src/mpfr && wget_with_cache http://www.mpfr.org/mpfr-3.0.0/mpfr-3.0.0.tar.gz )
 
-mkdir -p src/gmp
-( cd src/gmp && wget_with_cache https://gmplib.org/download/gmp/gmp-5.0.2.tar.bz2 )
+    mkdir -p src/mpc
+    ( cd src/mpc && wget_with_cache http://www.multiprecision.org/downloads/mpc-0.9.tar.gz )
 
-mkdir -p src/mpfr
-( cd src/mpfr && wget_with_cache http://www.mpfr.org/mpfr-3.0.0/mpfr-3.0.0.tar.gz )
+    mkdir -p src/ncurses
+    ( cd src/ncurses && wget_with_cache ftp://ftp.invisible-island.net/ncurses/ncurses-5.9.tar.gz )
 
-mkdir -p src/mpc
-( cd src/mpc && wget_with_cache http://www.multiprecision.org/downloads/mpc-0.9.tar.gz )
-
-mkdir -p src/ncurses
-( cd src/ncurses && wget_with_cache ftp://ftp.invisible-island.net/ncurses/ncurses-5.9.tar.gz )
-
-wget_with_cache "$aturl"/build-avr8-gnu-toolchain-git.sh
-patch -p1 <<'EOT'
+    wget_with_cache "$aturl"/build-avr8-gnu-toolchain-git.sh
+    patch -p1 <<'EOT'
 --- a/build-avr8-gnu-toolchain-git.sh	2018-04-27 21:21:15.205999999 +0000
 +++ b/build-avr8-gnu-toolchain-git.sh	2018-04-27 21:21:53.833999999 +0000
 @@ -1071,7 +1071,7 @@
@@ -114,33 +98,77 @@ patch -p1 <<'EOT'
          --host=${host_platform} \
          --libdir=${PREFIX_HOSTLIBS}/${LIB_DIR} \
 EOT
-chmod +x build-avr8-gnu-toolchain-git.sh
+    chmod +x build-avr8-gnu-toolchain-git.sh
+}
 
-mkdir -p "$installdir"
+do_build ()
+{
+    [ -n "$skip_build" ] && return
+    
+    local platform="$1"
+    local installdir="$2"
+    
+    echo "platform triple is: $platform"
+    echo "prefix directory is: $installdir (relative to $(pwd))"
+    
+    mkdir -p "$installdir"
+    
+    AVR_PREFIX="$installdir" \
+    AVR_8_GNU_TOOLCHAIN_VERSION="$atversion" \
+    BUILD_NUMBER="$atbuildnr" \
+    PARALLEL_JOBS=-j$(nproc) \
+        ./build-avr8-gnu-toolchain-git.sh -s src -H "$platform"
+}
 
-fi
+do_package ()
+{
+    [ -n "$skip_package" ] && return
+    
+    local installdir="$1"
+    local tarfile="$2"
+    
+    echo -n "Packaging $installdir"
+    fakeroot -- tar -cJf "$tarfile" "$installdir" --checkpoint=.100
+    echo " done."
+}
+
+squawk ()
+{
+    echo
+    echo "################################################################################"
+    echo "##### $(date) ##### $@"
+    echo "################################################################################"
+    echo
+}
+
 ################################################################################
-if [ -z "$skip_build" ]; then
 
-AVR_8_GNU_TOOLCHAIN_VERSION="$atversion" \
-BUILD_NUMBER="$atbuildnr" \
-    ./build-avr8-gnu-toolchain-git.sh -s src -p "$installdir"
+mkdir -p "$basedir"
+mkdir -p "$destdir"
+cd "$basedir"
 
-fi
-################################################################################
-if [ -z "$skip_package" ]; then
+squawk "Configuration:"
 
-tarfile="avr8-gnu-toolchain-$atversion.$atbuildnr.linux.any.$hostarch.tar.xz"
-echo -n "Packaging toolchain"
-fakeroot -- tar -cJf "$pkgdir/$tarfile" "$installdir" --checkpoint=.100
-echo " done."
-echo
-echo
-echo "If noting bad happened, you can find a toolchain package here:"
-echo
-echo "    $pkgdir/$tarfile"
-echo
-echo "Thanks for playing!"
+echo "           basedir: $basedir"
+echo "           destdir: $destdir"
+echo "          platform: $platform"
+echo "          archname: $archname"
+echo "         atversion: $atversion"
+echo "         atbuildnr: $atbuildnr"
+echo "       installbase: $installbase"
+echo "           tarbase: $tarbase"
 
-fi
-################################################################################
+squawk "Preparing for build..."
+do_prepare
+
+squawk "Compiling $archname toolchain..."
+do_build "$platform" "${installbase}_$archname"
+
+squawk "Packaging $archname toolchain..."
+do_package "${installbase}_$archname" "$destdir/$tarbase.$archname.tar.xz"
+
+squawk "Build complete!"
+echo "If nothing bad happened, you can find a toolchain package here:"
+echo
+echo "    $destdir/$tarbase.$archname.tar.xz"
+echo
