@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: vssh support is installed
+      copy:
+        src: /vagrant/provision/cdbash
+        dest: /usr/local/bin
+        owner: root
+        group: root
+        mode: u=rwx,go=rx
+    - name: distribution backports are enabled
+      apt_repository:
+        repo: deb http://archive.ubuntu.com/ubuntu xenial-backports main restricted universe multiverse
+        state: present
+    - name: distribution is up-to-date
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+        upgrade: dist

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+test -n "$1" && cd "$1"
+shift
+test "$#" -gt 0 && exec "$@"
+exec /bin/bash --login
