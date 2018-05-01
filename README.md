@@ -19,3 +19,7 @@ When you get back from your smoke break, there should be a new tarball named som
 You can also download binaries we've built if you like:
 
 * [avr8-gnu-toolchain-3.6.1.20180428203441-pfs.linux.any.x86_64.tar.xz](https://bitbucket.org/profirmserv/pfs-toolchain/downloads/avr8-gnu-toolchain-3.6.1.20180428203441-pfs.linux.any.x86_64.tar.xz)
+
+## Contributions
+
+We welcome contributions via [BitBucket pull request](https://bitbucket.org/profirmserv/pfs-avr8_toolchain_builder/pull-requests/new).
