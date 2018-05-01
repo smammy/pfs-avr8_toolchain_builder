@@ -40,3 +40,4 @@
           - bison
           - libpython2.7-dev
           - xz-utils
+          - git

@@ -9,7 +9,7 @@ maybe_set destdir "/vagrant/releases"
 maybe_set platform x86_64-linux-gnu
 maybe_set archname x86_64
 maybe_set atversion "3.6.1"
-maybe_set atbuildnr "$(date --utc +%Y%m%d%H%M%S)-pfs"
+maybe_set atbuildnr "pfs-$(git describe --dirty=+)"
 maybe_set installbase "avr8-gnu-toolchain-linux"
 maybe_set tarbase "avr8-gnu-toolchain-$atversion.$atbuildnr.linux.any"
 maybe_set aturl "http://distribute.atmel.no/tools/opensource/Atmel-AVR-GNU-Toolchain/$atversion"

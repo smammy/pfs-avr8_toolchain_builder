@@ -12,7 +12,7 @@ vagrant ssh
 /vagrant/avr8-toolchain-build.bash
 ```
 
-When you get back from your smoke break, there should be a new tarball named something like `avr8-gnu-toolchain-3.6.1.20180428203441-pfs.linux.any.x86_64.tar.xz` in the project directory.
+When you get back from your smoke break, there should be a new tarball named something like `avr8-gnu-toolchain-3.6.1.pfs-v1.linux.any.x86_64.tar.xz` in the project directory.
 
 ## Pre-Built Binaries
 
