@@ -5,8 +5,8 @@ We are building our own Atmel AVR8 GNU Toolchain for 64-bit Linux now because Mi
 ## Build Your Own
 
 ```
-git clone https://bitbucket.org/profirmserv/pfs-toolchain
-cd pfs-toolchain
+git clone https://bitbucket.org/profirmserv/pfs-avr8_toolchain_builder
+cd pfs-avr8_toolchain_builder
 vagrant up
 vagrant ssh
 /vagrant/avr8-toolchain-build.bash
