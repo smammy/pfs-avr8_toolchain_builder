@@ -12,7 +12,7 @@ maybe_set atversion "3.6.1"
 maybe_set atbuildnr "$(date --utc +%Y%m%d%H%M%S)-pfs"
 maybe_set installbase "avr8-gnu-toolchain-linux"
 maybe_set tarbase "avr8-gnu-toolchain-$atversion.$atbuildnr.linux.any"
-maybe_set aturl "https://office.innovative-electronics.com/third-party/atmel/distribute.atmel.no/tools/opensource/Atmel-AVR-GNU-Toolchain/$atversion"
+maybe_set aturl "http://distribute.atmel.no/tools/opensource/Atmel-AVR-GNU-Toolchain/$atversion"
 maybe_set dlcache "/var/cache/wget"
 
 ################################################################################
