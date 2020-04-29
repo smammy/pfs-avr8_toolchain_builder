@@ -5,7 +5,7 @@ We are building our own Atmel AVR8 GNU Toolchain for 64-bit Linux now because Mi
 ## Build Your Own
 
 ```
-git clone https://bitbucket.org/profirmserv/pfs-avr8_toolchain_builder
+git clone https://github.com/profirmserv/pfs-avr8_toolchain_builder
 cd pfs-avr8_toolchain_builder
 vagrant up
 vagrant ssh
@@ -16,8 +16,8 @@ When you get back from your smoke break, there should be a new tarball named som
 
 ## Pre-Built Binaries
 
-You can also download [binaries we've built](https://bitbucket.org/profirmserv/pfs-avr8_toolchain_builder/downloads).
+You can also download [binaries we've built](https://github.com/profirmserv/pfs-avr8_toolchain_builder/releases).
 
 ## Contributions
 
-We welcome contributions via [BitBucket pull request](https://bitbucket.org/profirmserv/pfs-avr8_toolchain_builder/pull-requests/new).
+We welcome contributions via [GitHub pull request](https://github.com/profirmserv/pfs-avr8_toolchain_builder/compare).
